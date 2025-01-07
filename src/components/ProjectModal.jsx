@@ -14,7 +14,6 @@ const handleAdd = () => {
     }
   };
 
-
   return (
     <Modal
       title={isEdit ? "Edit Project" : "Add Project"}

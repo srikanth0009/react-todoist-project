@@ -14,7 +14,7 @@ export const fetchProjects = async (setProjects) => {
 export const addProject = async (projectData, setProjects) => {
   try {
     const project = await api.addProject({name : projectData.name, isFavorite: projectData.isFavorite});
-    setProjects((prev) => [...prev, project]);
+    setProjects(project);
   } catch (error) {
     console.error("Error adding project:", error);
   }
@@ -23,20 +23,18 @@ export const addProject = async (projectData, setProjects) => {
 export const updateProject = async (projectId, updatedData, setProjects) => {
   try {
     const updatedProject = await api.updateProject(`${projectId}`, updatedData);
-    setProjects((prev) =>
-      prev.map((project) =>
-        project.id === updatedProject.id ? { ...project, ...updatedData } : project
-      )
-    );
+    setProjects(updatedProject);
   } catch (error) {
     console.error("Error updating project:", error);
   }
 };
 
 export const deleteProject = async (projectId, setProjects) => {
+  console.log("Bye");
+  console.log(projectId);
   try {
-    await api.deleteProject(projectId);
-    setProjects((prev) => prev.filter((project) => project.id !== projectId));
+    await api.deleteProject(`${projectId}`);
+    setProjects(projectId);
   } catch (error) {
     console.error("Error deleting project:", error);
   }

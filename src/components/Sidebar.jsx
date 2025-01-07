@@ -141,7 +141,7 @@ const Sidebar = ({
                               className="cursor-pointer"
                               onClick={() => {
                                 setProjectsPopup(null); // Close the popover
-                                removeProject(project);
+                                removeProject(project.id);
                               }}
                             >
                               Delete
@@ -218,7 +218,7 @@ const Sidebar = ({
                           className="cursor-pointer"
                           onClick={() => {
                             setProjectsPopup(null); 
-                            removeProject(project);
+                            removeProject(project.id);
                           }}
                         >
                           Delete

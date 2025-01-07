@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useReducer, useState } from "react";
 import { Layout, Typography } from "antd";
 import Sidebar from "../components/Sidebar";
 import TaskModal from "../components/TaskModal";
@@ -17,20 +17,20 @@ import {
   deleteProject,
 } from "../components/Projects";
 import TaskList from "../components/TaskList";
-import { Input, List } from "antd";
+import { Input } from "antd";
 
 const { Content } = Layout;
 
-const HomePage = () => {
-  const [view, setView] = useState("Inbox");
-  const [taskModal, setTaskModal] = useState({
+const initialState = {
+  view: "Inbox",
+  taskModal: {
     visible: false,
     taskData: { content: "", description: "", projectId: "0" },
     editIndex: null,
-  });
-  const [tasks, setTasks] = useState([]);
-  const [projects, setProjects] = useState([]);
-  const [projectState, setProjectState] = useState({
+  },
+  tasks: [],
+  projects: [],
+  projectState: {
     currentProject: null,
     editProject: {
       id: "",
@@ -40,171 +40,287 @@ const HomePage = () => {
       isEdit: false,
     },
     modalVisible: false,
-  });
-  const [filteredProjects, setFilteredProjects] = useState(projects);
+  },
+  filteredProjects: [],
+};
+
+const reducer = (state, action) => {
+  switch (action.type) {
+    case "SET_VIEW":
+      return { ...state, view: action.payload };
+
+    case "SET_TASKS":
+      return { ...state, tasks: action.payload };
+
+    case "ADD_TASKS":
+      return {
+        ...state,
+        tasks: [...state.tasks, action.payload],
+      };
+
+    case "UPDATE_TASK": {
+      const { id, content, description } = action.payload;
+      return {
+        ...state,
+        tasks: state.tasks.map((task) =>
+          task.id === id
+            ? { ...task, content: content, description: description }
+            : task
+        ),
+      };
+    }
+
+    case "DELETE_TASK": {
+      return {
+        ...state,
+        tasks: state.tasks.filter((task) => task.id !== action.payload),
+      };
+    }
+
+    case "SET_PROJECTS":
+      return { ...state, projects: action.payload }; 
+
+    case "ADD_PROJECT":
+      return {
+        ...state,
+        projects: [...state.projects, action.payload],
+      };
+
+    case "UPDATE_PROJECT": {
+      const { id, name } = action.payload;
+      return {
+        ...state,
+        projects: state.projects.map((project) =>
+          project.id === id ? { ...project, name: name } : project
+        ),
+      };
+    }
+
+    case "DELETE_PROJECT":
+      return {
+        ...state,
+        projects: state.projects.filter(
+          (project) => project.id !== action.payload
+        ),
+      };
+
+    case "UPDATE_TASK_MODAL":
+      return { ...state, taskModal: { ...state.taskModal, ...action.payload } };
+
+    case "UPDATE_TASK_MODAL_KEY_VALUE":
+      return {
+        ...state,
+        taskModal: {
+          ...state.taskModal,
+          ...action.payload,
+          taskData: {
+            ...state.taskModal.taskData,
+            ...(action.payload.taskData || {}),
+          },
+        },
+      };
+
+    case "SET_PROJECT_STATE":
+      return {
+        ...state,
+        projectState: { ...state.projectState, ...action.payload },
+      };
+
+      case "UPDATE_PROJECT_STATE_KEY_VALUE":
+      return {
+        ...state,
+        projectState: {
+          ...state.projectState,
+          ...action.payload,
+          editProject: {
+            ...state.projectState.editProject,
+            ...(action.payload.editProject || {}),
+          },
+        },
+      };
+
+    case "SET_FILTERED_PROJECTS":
+      return { ...state, filteredProjects: action.payload };
+
+    default:
+      return state;
+  }
+};
+
+const HomePage = () => {
+  const [state, dispatch] = useReducer(reducer, initialState);
 
   const { Title } = Typography;
   const { Search } = Input;
 
   useEffect(() => {
-    fetchProjects(setProjects);
-    fetchTasks(setTasks);
+    fetchProjects((projects) =>
+      dispatch({ type: "SET_PROJECTS", payload: projects })
+    );
+    fetchTasks((tasks) => dispatch({ type: "SET_TASKS", payload: tasks }));
   }, []);
 
   const addProject = (project) => {
     if (project.isEdit) {
-      updateProject(project.id, project, setProjects);
-
-      setProjectState((prev) => ({
-        ...prev,
-        editProject: {
-          id: "",
-          name: "",
-          color: "",
-          isFavorite: false,
-          isEdit: false,
+      updateProject(project.id, project, (updatedProjects) =>
+        dispatch({ type: "UPDATE_PROJECT", payload: updatedProjects })
+      );
+      dispatch({
+        type: "SET_PROJECT_STATE",
+        payload: {
+          editProject: {
+            id: "",
+            name: "",
+            color: "",
+            isFavorite: false,
+            isEdit: false,
+          },
         },
-      }));
+      });
     } else {
-      addNewProject(project, setProjects);
+      addNewProject(project, (updatedProjects) =>
+        dispatch({ type: "ADD_PROJECT", payload: updatedProjects })
+      );
     }
   };
 
-  const handleEditProjectClick = (project) => {
-    setProjectState((prev) => ({
-      ...prev,
-      modalVisible: true,
-      editProject: {
-        id: project.id,
-        name: project.name,
-        color: project.color,
-        isFavorite: project.isFavorite,
-        isEdit: true,
-      },
-    }));
-  };
 
-  const updateSetEditProject = (key, value) => {
-    setProjectState((prev) => ({
-      ...prev,
-      editProject: {
-        ...prev.editProject,
-        [key]: value,
-      },
-    }));
-  };
-
-  const removeProject = (project) => {
-    deleteProject(project.id, setProjects);
-    console.log("hello");
-    setView("Inbox");
-  };
-
-  const handleMenuClick = (key, projectId = projects[0]?.id) => {
+  const handleMenuClick = (key, projectId = state.projects[0]?.id) => {
     if (key === "addTask") {
-      setTaskModal({
-        visible: true,
-        taskData: { content: "", description: "", projectId },
-        editIndex: null,
+      dispatch({
+        type: "UPDATE_TASK_MODAL",
+        payload: {
+          visible: true,
+          taskData: { content: "", description: "", projectId },
+          editIndex: null,
+        },
       });
-    } else if (projects.some((project) => project.name === key)) {
-      const selectedProject = projects.find((project) => project.name === key);
+    } else if (state.projects.some((project) => project.name === key)) {
+      const selectedProject = state.projects.find(
+        (project) => project.name === key
+      );
       if (selectedProject) {
-        setView("projects");
-        setProjectState((prev) => ({
-          ...prev,
-          currentProject: selectedProject,
-        }));
+        dispatch({ type: "SET_VIEW", payload: "projects" });
+        dispatch({
+          type: "SET_PROJECT_STATE",
+          payload: { currentProject: selectedProject },
+        });
       }
     } else {
-      setView(key);
+      dispatch({ type: "SET_VIEW", payload: key });
     }
   };
 
   const handleEditTaskClick = (id) => {
-    const taskToEdit = tasks.find((task) => task.id === id);
+    const taskToEdit = state.tasks.find((task) => task.id === id);
 
-    setTaskModal({
-      visible: true,
-      taskData: {
-        ...taskModal.taskData,
-        ...taskToEdit,
+    dispatch({
+      type: "UPDATE_TASK_MODAL",
+      payload: {
+        visible: true,
+        taskData: {
+          content: taskToEdit.content,
+          description: taskToEdit.description,
+          projectId: taskToEdit.projectId,
+        },
+        editIndex: taskToEdit.id,
       },
-      editIndex: id,
     });
   };
 
   const handleTaskChange = (key, value) => {
-    setTaskModal((prev) => ({
-      ...prev,
-      taskData: { ...prev.taskData, [key]: value },
-    }));
+    dispatch({
+      type: "UPDATE_TASK_MODAL_KEY_VALUE",
+      payload: {
+        taskData: { [key]: value },
+      },
+    });
   };
 
   const addTask = () => {
-    const data = taskModal.taskData;
+    const data = state.taskModal.taskData;
 
-    if (taskModal.taskData.content.trim()) {
-      if (taskModal.editIndex !== null) {
-        editTask(taskModal.editIndex, taskModal.taskData, setTasks);
+    if (state.taskModal.taskData.content.trim()) {
+      if (state.taskModal.editIndex !== null) {
+        editTask(
+          state.taskModal.editIndex,
+          state.taskModal.taskData,
+          (updatedTasks) =>
+            dispatch({ type: "UPDATE_TASK", payload: updatedTasks })
+        );
       } else {
-        addNewTask(data, setTasks);
+        addNewTask(state.taskModal.taskData, (updatedTasks) =>
+          dispatch({ type: "ADD_TASKS", payload: updatedTasks })
+        );
       }
 
-      setTaskModal({
-        visible: false,
-        taskData: { content: "", description: "", projectId: "0" },
+      dispatch({
+        type: "UPDATE_TASK_MODAL",
+        payload: {
+          visible: false,
+          taskData: { content: "", description: "", projectId: "0" },
+        },
       });
+     
     } else {
       alert("Task name is required");
     }
   };
 
-  const deleteTask = (id) => {
-    del(id, setTasks);
-  };
-
-  const closeTask = (id) => {
-    close(id, setTasks);
-  };
-
   const listProjects = () => {
-    setView("projects");
-    setProjectState((prev) => ({
-      ...prev,
-      currentProject: null,
-    }));
+    dispatch({
+      type: "SET_VIEW",
+      payload: "projects",
+    });
+
+    dispatch({
+      type: "SET_PROJECT_STATE",
+      payload: { currentProject: null },
+    });
   };
 
   const onSearch = (value) => {
-
-    if (value.trim()) {
-
-      const searchText = value.toLowerCase();
-      const updatedProjects = projects.filter((project) =>
-        project.name.toLowerCase().includes(searchText)
-      );
-        setFilteredProjects(updatedProjects);
-
-    } else {
-       setFilteredProjects(projects);
-    }
+    const searchText = value.trim().toLowerCase();
+    const filtered = searchText
+      ? state.projects.filter((project) =>
+          project.name.toLowerCase().includes(searchText)
+        )
+      : state.projects;
+    dispatch({ type: "SET_FILTERED_PROJECTS", payload: filtered });
   };
 
   return (
     <Layout style={{ height: "100vh" }}>
-      {projects.length > 0 && (
+      {state.projects.length > 0 && (
         <Sidebar
-          tasks={tasks}
-          projects={projects}
-          onMenuClick={handleMenuClick}
-          handleEditProjectClick={(project) => handleEditProjectClick(project)}
-          removeProject={(id) => removeProject(id)}
+          tasks={state.tasks}
+          projects={state.projects}
+          onMenuClick={(key) => handleMenuClick(key)}
+          handleEditProjectClick={(project) =>
+            dispatch({
+              type: "SET_PROJECT_STATE",
+              payload: {
+                modalVisible: true,
+                editProject: {
+                  id: project.id,
+                  name: project.name,
+                  color: project.color,
+                  isFavorite: project.isFavorite,
+                  isEdit: true,
+                },
+              },
+            })
+          }
+          removeProject={(id) =>
+            deleteProject(id, (updatedProjects) =>
+              dispatch({ type: "DELETE_PROJECT", payload: updatedProjects })
+            )
+          }
           setProjectModalVisible={(visible) =>
-            setProjectState((prev) => ({
-              ...prev,
-              modalVisible: visible,
-            }))
+            dispatch({
+              type: "SET_PROJECT_STATE",
+              payload: { modalVisible: visible },
+            })
           }
           listProjects={listProjects}
         />
@@ -212,42 +328,58 @@ const HomePage = () => {
 
       <Layout>
         <Content className="p-9 bg-white">
-          {view === "Inbox" && projects.length > 0 && (
+          {state.view === "Inbox" && state.projects.length > 0 && (
             <TaskList
-              tasks={tasks}
-              project={projects[0]}
-              deleteTask={(index) => deleteTask(index)}
-              closeTask={(index) => closeTask(index)}
-              handleAddTaskClick={(key) => handleMenuClick(key)}
+              tasks={state.tasks}
+              project={state.projects}
+              deleteTask={(id) =>
+                del(id, (updatedTasks) =>
+                  dispatch({ type: "DELETE_TASK", payload: updatedTasks })
+                )
+              }
+              closeTask={(id) =>
+                close(id, (updatedTasks) =>
+                  dispatch({ type: "DELETE_TASK", payload: updatedTasks })
+                )
+              }
+              handleAddTaskClick={(key, saveto) => handleMenuClick(key, saveto)}
               handleEdit={(id) => handleEditTaskClick(id)}
             />
           )}
 
-          {view === "today" && <p>There is no tasks for today</p>}
-          {view === "upcoming" && <p>There is no upcoming tasks</p>}
-          {view === "filters" && <p>No filters applied</p>}
+          {state.view === "today" && <p>There is no tasks for today</p>}
+          {state.view === "upcoming" && <p>There is no upcoming tasks</p>}
+          {state.view === "filters" && <p>No filters applied</p>}
 
-          {view === "projects" && projectState.currentProject ? (
+          {state.view === "projects" && state.projectState.currentProject ? (
             <TaskList
-              tasks={tasks}
-              project={projectState.currentProject}
-              deleteTask={(index) => deleteTask(index)}
-              closeTask={(index) => closeTask(index)}
+              tasks={state.tasks}
+              project={state.projectState.currentProject}
+              deleteTask={(id) =>
+                del(id, (updatedTasks) =>
+                  dispatch({ type: "DELETE_TASK", payload: updatedTasks })
+                )
+              }
+              closeTask={(id) =>
+                close(id, (updatedTasks) =>
+                  dispatch({ type: "DELETE_TASK", payload: updatedTasks })
+                )
+              }
               handleAddTaskClick={(key, saveto) => handleMenuClick(key, saveto)}
               handleEdit={(id) => handleEditTaskClick(id)}
             />
           ) : (
-            view === "projects" && (
+            state.view === "projects" && (
               <div className="mx-[150px] my-[50px]">
                 <Title level={1}>Projects</Title>
                 <Search
                   placeholder="Search projects"
                   allowClear
-                  onChange={(event)=> onSearch(event.target.value)}
+                  onChange={(event) => onSearch(event.target.value)}
                   style={{ marginBottom: "20px" }}
                 />
                 <ul>
-                  {filteredProjects.map(
+                  {state.filteredProjects.map(
                     (project) =>
                       project.name !== "Inbox" && (
                         <li
@@ -271,13 +403,16 @@ const HomePage = () => {
       </Layout>
 
       <TaskModal
-        visible={taskModal.visible}
-        taskData={taskModal.taskData}
-        projects={projects}
+        visible={state.taskModal.visible}
+        taskData={state.taskModal.taskData}
+        projects={state.projects}
         onCancel={() =>
-          setTaskModal({
-            visible: false,
-            taskData: { content: "", description: "", projectId: "0" },
+          dispatch({
+            type: "UPDATE_TASK_MODAL",
+            payload: {
+              visible: false,
+              taskData: { content: "", description: "", projectId: "0" },
+            },
           })
         }
         onOk={addTask}
@@ -285,23 +420,35 @@ const HomePage = () => {
       />
 
       <ProjectModal
-        visible={projectState.modalVisible}
+        visible={state.projectState.modalVisible}
         onCancel={() =>
-          setProjectState((prev) => ({
-            ...prev,
-            modalVisible: false,
-            editProject: {
-              id: "",
-              name: "",
-              color: "",
-              isFavorite: false,
-              isEdit: false,
+          dispatch({
+            type: "SET_PROJECT_STATE",
+            payload: {
+              modalVisible: false,
+              editProject: {
+                id: "",
+                name: "",
+                color: "",
+                isFavorite: false,
+                isEdit: false,
+              },
             },
-          }))
+          })
         }
         onAddProject={addProject}
-        editProject={projectState.editProject}
-        updateEditProject={(key, value) => updateSetEditProject(key, value)}
+        editProject={state.projectState.editProject}
+        updateEditProject={(key, value) =>
+          dispatch({
+            type: "UPDATE_PROJECT_STATE_KEY_VALUE",
+            payload: {
+              editProject: {
+                // ...state.projectState.editProject,
+                [key]: value,
+              },
+            },
+          })
+        }
       />
     </Layout>
   );
