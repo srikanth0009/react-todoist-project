@@ -1,13 +1,13 @@
 import React, { useState} from "react";
 import { Modal, Input, Button, Switch } from "antd";
 
-const ProjectModal = ({ visible, onCancel, onAddProject, editProject, updateEditProject }) => {
+const ProjectModal = ({ visible, onCancel, onAddProject, projectModal, updateProjectData }) => {
 
-const isEdit = editProject.isEdit;
+const isEdit = projectModal.editIndex;
 
 const handleAdd = () => {
-    if (editProject.name.trim()) {
-      onAddProject(editProject);
+    if (projectModal.projectData.name.trim()) {
+      onAddProject();
       onCancel();
     } else {
       alert("Project name cannot be empty");
@@ -30,19 +30,19 @@ const handleAdd = () => {
     >
       <label>Name</label>
       <Input
-        value={editProject.name || ""}
-        onChange={(e) => updateEditProject("name",e.target.value)}
+        value={projectModal.projectData.name || ""}
+        onChange={(e) => updateProjectData("name",e.target.value)}
       />
       <label>Color</label>
       <Input
-        value={editProject.color || ""}
-        onChange={(e) => updateEditProject("color",e.target.value)}
+        value={projectModal.projectData.color || ""}
+        onChange={(e) => updateProjectData("color",e.target.value)}
       />
       <label>Add to favorites</label>
       <br />
       <Switch
-        checked={editProject.isFavorite || false}
-        onChange={(checked) => updateEditProject("isFavorite",checked)}
+        checked={projectModal.projectData.isFavorite || false}
+        onChange={(checked) => updateProjectData("isFavorite",checked)}
       />{" "}
     </Modal>
   );

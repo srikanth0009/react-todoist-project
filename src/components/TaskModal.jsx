@@ -1,7 +1,6 @@
 import React from 'react'
 import { Modal } from 'antd';
 import {Select, Button,Input} from 'antd'
-import { addTask, editTask, deleteTask } from './Tasks';
 
 const TaskModal = ({ visible, taskData, projects, onCancel, onOk, onChange }) => {
 

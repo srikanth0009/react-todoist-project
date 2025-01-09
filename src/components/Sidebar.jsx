@@ -25,6 +25,7 @@ const Sidebar = ({
 
   const [collapsed, setCollapsed] = useState(false);
 
+  
   const { Title } = Typography;
 
   const menuConfig = [

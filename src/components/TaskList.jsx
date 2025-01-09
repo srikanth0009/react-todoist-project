@@ -3,7 +3,7 @@ import { Button, Typography, Checkbox } from "antd";
 import { PlusCircleOutlined, EditOutlined,DeleteOutlined } from "@ant-design/icons";
 
 const TaskList = ({ tasks, project, deleteTask, closeTask , handleAddTaskClick, handleEdit }) => {
-   
+
   const [showEdit, setShowEdit] = useState(false);
   const { Title } = Typography;
 
