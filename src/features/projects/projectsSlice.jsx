@@ -36,7 +36,6 @@ const initialState = {
     projectData: { name: "", color: "", isFavorite: false },
     editIndex: null,
   },
-  currentProject : "Inbox",
   projects: [],
   status: "idle", 
   error: null,

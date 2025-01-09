@@ -33,7 +33,7 @@ const HomePage = () => {
     dispatch(fetchProjects());
     dispatch(fetchTasks());
 
-  }, [dispatch]);
+  }, []);
 
   const addProject = () => {
   
@@ -128,7 +128,7 @@ const HomePage = () => {
           project.name.toLowerCase().includes(searchText)
         )
       : projects;
-      
+
     setFilteredProjects(filtered);
     };
 
