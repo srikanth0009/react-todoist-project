@@ -63,6 +63,6 @@ const taskSlice = createSlice({
     }
 })
 
-export const {openTaskModal, closeTaskModal}  = taskSlice.actions
+// export const {openTaskModal, closeTaskModal}  = taskSlice.actions
 
 export default taskSlice.reducer;

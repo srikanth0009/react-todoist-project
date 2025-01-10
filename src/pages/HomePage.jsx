@@ -1,7 +1,7 @@
 import React, { useEffect, useReducer, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchTasks, addTask as addNewTask, editTask, deleteTask, openTaskModal, closeTaskModal } from "../features/tasks/tasksSlice";
-import { fetchProjects, addProject as addNewProject, updateProject, deleteProject, openProjectModal, closeProjectModal } from "../features/projects/projectsSlice";
+import { fetchTasks, addTask as addNewTask, editTask, deleteTask } from "../features/tasks/tasksSlice";
+import { fetchProjects, addProject as addNewProject, updateProject, deleteProject } from "../features/projects/projectsSlice";
 import { Layout, Typography } from "antd";
 import Sidebar from "../components/Sidebar";
 import TaskModal from "../components/TaskModal";
@@ -31,7 +31,7 @@ const HomePage = () => {
   const dispatch = useDispatch();
   const tasks = useSelector((state)=> state.tasks.tasks);
   const projects = useSelector((state)=> state.projects.projects);
-  
+
   const [filteredProjects, setFilteredProjects] = useState(projects);
 
 

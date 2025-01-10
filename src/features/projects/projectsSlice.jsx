@@ -36,7 +36,7 @@ const initialState = {
 };
 
 const projectSlice = createSlice({
-  
+
   name: "projects",
   initialState,
 
@@ -71,6 +71,6 @@ const projectSlice = createSlice({
   },
 });
 
-export const { openProjectModal, closeProjectModal } = projectSlice.actions;
+// export const { openProjectModal, closeProjectModal } = projectSlice.actions;
 
 export default projectSlice.reducer;
