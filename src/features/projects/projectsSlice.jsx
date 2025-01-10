@@ -29,40 +29,17 @@ export const deleteProject = createAsyncThunk("projects/deleteProject", async (p
   return projectId;
 });
 
-// Initial State
 const initialState = {
-  projectModal: {
-    visible: false,
-    projectData: { name: "", color: "", isFavorite: false },
-    editIndex: null,
-  },
   projects: [],
   status: "idle", 
   error: null,
 };
 
 const projectSlice = createSlice({
+  
   name: "projects",
   initialState,
-  reducers: {
-    openProjectModal: (state, action) => {
-      state.projectModal.visible = true;
-      state.projectModal.projectData = action.payload?.projectData || {
-        name: "",
-        isFavorite: false,
-      };
-      state.projectModal.editIndex = action.payload?.editIndex ?? null;
-    },
-    closeProjectModal: (state) => {
-      state.projectModal.visible = false;
-      state.projectModal.projectData = { name: "", isFavorite: false };
-      state.projectModal.editIndex = null;
-    },
-    updateProjectData : (state,action) => {
-      const {key, value} = action.payload;
-      state.projectModal.projectData[key] =  value;
-    },
-  },
+
   extraReducers: (builder) => {
     builder
       .addCase(fetchProjects.pending, (state) => {

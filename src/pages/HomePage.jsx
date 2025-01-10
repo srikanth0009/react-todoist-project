@@ -16,12 +16,22 @@ const HomePage = () => {
   const [view, setView] = useState("Inbox");
   const [currentProject, setCurrentProject] = useState("Inbox");
 
+  const [taskModal,setTaskModal] = useState({
+        visible: false,
+        taskData : { content : "", description : "", projectId : "0"},
+        editIndex : null,
+  })
+
+  const [projectModal, setProjectModal] = useState({
+      visible: false,
+      projectData: { name: "", color: "", isFavorite: false },
+      editIndex: null,
+  })
+
   const dispatch = useDispatch();
   const tasks = useSelector((state)=> state.tasks.tasks);
-  const taskModal = useSelector((state)=> state.tasks.taskModal);
   const projects = useSelector((state)=> state.projects.projects);
-  const projectModal = useSelector((state)=> state.projects.projectModal);
-
+  
   const [filteredProjects, setFilteredProjects] = useState(projects);
 
 
@@ -38,27 +48,35 @@ const HomePage = () => {
   const addProject = () => {
   
     if (projectModal.editIndex !== null) {
-      const projectId = projectModal.projectData.id; 
-      const updatedData = { ...projectModal.projectData };
+      const projectId = projectModal.editIndex; 
+      const updatedData = projectModal.projectData ;
       dispatch(updateProject({projectId, updatedData }));
     } else {
-        dispatch(addNewProject(projectModal.taskData));
+        dispatch(addNewProject(projectModal.projectData));
     }
+
+    setProjectModal({ visible: false, projectData: { name: "", color: "", isFavorite: false }, editIndex: null });
+
   };
 
 
   const handleEditProjectClick = (pro) => {
 
-    const projectToEdit = projects.find((project) => project.id === pro.id);   
-    dispatch(openProjectModal({ projectData: projectToEdit, editIndex: projectToEdit.id }));
-  
+    const projectToEdit = projects.find((project) => project.id === pro.id);  
+       
+    setProjectModal({ visible: true, projectData: projectToEdit, editIndex: projectToEdit.id });
+
   };
 
   const handleMenuClick = (key, projectId = projects[0]?.id) => {
     if (key === "addTask") {
 
-      dispatch(openTaskModal({ taskData: { content: "", description: "", projectId : projectId }, editIndex: null }));
-    
+      setTaskModal({
+        visible: true,
+        taskData: { content: "", description: "", projectId },
+        editIndex: null,
+      });
+
     } else if(key === "Inbox"){
       setView("Inbox");
       setCurrentProject(null);
@@ -82,18 +100,23 @@ const HomePage = () => {
   const handleEditTaskClick = (id) => {
     const taskToEdit = tasks.find((task) => task.id === id);
 
-    dispatch(openTaskModal({ taskData: {
-      content : taskToEdit.content,
-      description : taskToEdit.description,
-    }, editIndex: taskToEdit.id }));
-    
+    setTaskModal({
+      visible: true,
+      taskData: {
+        content: taskToEdit.content,
+        description: taskToEdit.description,
+        projectId: taskToEdit.projectId,
+      },
+      editIndex: taskToEdit.id,
+    });    
   };
 
   const handleTaskChange = (key, value) => {
-    dispatch({
-      type: "tasks/updateTaskData",
-      payload: { key, value },
-    });
+    
+    setTaskModal((prev) => ({
+      ...prev,
+      taskData: { ...prev.taskData, [key]: value },
+    }));
   };
 
   const addTask = () => {
@@ -105,11 +128,10 @@ const HomePage = () => {
         dispatch(editTask({ taskId: taskModal.editIndex, updatedData: taskModal.taskData }));
       
       } else {
-
         dispatch(addNewTask(taskModal.taskData));
       }
-      
-      dispatch(closeTaskModal());
+       setTaskModal({ visible: false, taskData: { content: "", description: "", projectId: "0" }, editIndex: null });
+
 
     } else {
       alert("Task name is required");
@@ -141,8 +163,8 @@ const HomePage = () => {
           onMenuClick={(key) => handleMenuClick(key)}
           handleEditProjectClick={ (project) => handleEditProjectClick(project) }
           removeProject={(id) => { dispatch(deleteProject(id)) } } 
-          setProjectModalVisible={(visibility) => visibility ? dispatch(openProjectModal())
-            : dispatch(closeProjectModal()) 
+          setProjectModalVisible={(visibility) => 
+            setProjectModal((prev) => ({ ...prev, visible: visibility }))
           }
           listProjects={listProjects}
         />
@@ -212,21 +234,33 @@ const HomePage = () => {
         visible={taskModal.visible}
         taskData={taskModal.taskData}
         projects={projects}
-        onCancel={() => dispatch(closeTaskModal()) }
+        onCancel={() => 
+          setTaskModal({
+            visible: false,
+            taskData: { content: "", description: "", projectId: "0" },
+            editIndex: null,
+          })
+         }
         onOk={addTask}
         onChange={(key, value) => handleTaskChange(key, value)}
       />
 
       <ProjectModal
         visible={projectModal.visible}
-        onCancel={() => dispatch(closeProjectModal()) }
+        onCancel={() =>
+          setProjectModal({
+            visible: false,
+            projectData: { name: "", color: "", isFavorite: false },
+            editIndex: null,
+          })
+         }
         onAddProject={addProject}
         projectModal={projectModal}
         updateProjectData={(key, value) =>
-          dispatch({
-            type: "projects/updateProjectData",
-            payload: { key, value },
-          })
+          setProjectModal((prev) => ({
+            ...prev,
+            projectData: { ...prev.projectData, [key]: value },
+          }))
         }
       />
     </Layout>

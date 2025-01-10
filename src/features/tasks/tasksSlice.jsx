@@ -27,11 +27,7 @@ export const deleteTask = createAsyncThunk("tasks/deleteTask", async(taskId)=> {
 
 
 const initialState = {
-    taskModal : {
-        visible: false,
-        taskData : { content : "", description : "", projectId : "0"},
-        editIndex : null,
-    },
+
     tasks : [],
     status : "idle",
     error : null,
@@ -40,28 +36,6 @@ const initialState = {
 const taskSlice = createSlice({
     name : "tasks",
     initialState,
-
-    reducers : {
-        openTaskModal : (state, action) => {
-            state.taskModal.visible = true;
-            state.taskModal.taskData = action.payload.taskData || {
-                content : "",
-                description : "",
-                projectId : "0",
-            };
-            state.taskModal.editIndex = action.payload.editIndex || null;
-        },
-
-        closeTaskModal : (state) => {
-            state.taskModal.visible = false;
-            state.taskModal.taskData =  { content : "", description : "", projectId : "0", };
-            state.taskModal.editIndex = null;
-        },
-        updateTaskData : (state,action) => {
-            const {key, value} = action.payload;
-            state.taskModal.taskData[key] =  value;
-        },
-    },
 
     extraReducers : (builder) => {
         builder
